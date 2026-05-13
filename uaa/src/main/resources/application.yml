@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: uaa
+server:
+  port: 8090
+  error:
+    whitelabel:
+      enabled: false
+logging:
+  level:
+    root: INFO
+    org.springframework.security: trace
+    org.springframework.security.oauth2: trace
+    org.springframework.security.oauth2.server: trace
+    org.springframework.security.oauth2.jwt: trace
+

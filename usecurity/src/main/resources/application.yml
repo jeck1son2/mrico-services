@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: usecurity
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+  datasource:
+    username: root
+    password: lggww
+    url: jdbc:mysql://localhost:3306/domo
+    driver-class-name: com.mysql.cj.jdbc.Driver
+#    type: com.alibaba.druid.pool.DruidDataSource  默认为HikariCP
+#    druid:
+#      initial-size: 5
+#      min-idle: 5
+#      max-active: 20
+#      max-wait: 60000
+#      remove-abandoned: true
+#      启用监控
+#      web-stat-filter:
+#        enabled: true
+#      stat-view-servlet:
+#        enabled: true
+#        url-pattern: /druid/*
+
+server:
+  port: 9000
+
+logging:
+  level:
+    org.springframework.security: error
+    org.springframework.security.oauth2: error
