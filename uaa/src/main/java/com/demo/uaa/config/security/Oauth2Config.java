@@ -24,7 +24,6 @@ import org.springframework.security.oauth2.server.authorization.settings.ClientS
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
-import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.authentication.logout.LogoutFilter;
 
 import java.util.UUID;
@@ -51,13 +50,13 @@ public class Oauth2Config {
         //禁止oauth2 失败自动跳转/error
         config.authorizationEndpoint(authenticationEntryPoint -> {
             authenticationEntryPoint.errorResponseHandler((request, response, authenticationException) -> {
-                response.setContentType("application/json");
-                response.setCharacterEncoding("utf-8");
-                Res r = Res.builder().code(401).message("授权失败").info(authenticationException.getMessage()).build();
-                response.getWriter().write(JSONUtil.toJsonStr(r));
-            });
-            //必须要有默认的授权页面，禁止不了
-//                    .consentPage("/oauth2/consent");
+                        response.setContentType("application/json");
+                        response.setCharacterEncoding("utf-8");
+                        Res r = Res.builder().code(401).message("授权失败").info(authenticationException.getMessage()).build();
+                        response.getWriter().write(JSONUtil.toJsonStr(r));
+                        //必须要有默认的授权页面，禁止不了
+                    })
+                    .consentPage("/oauth2/consent");
         });
 
         http
@@ -70,7 +69,10 @@ public class Oauth2Config {
                                 .authenticationEntryPoint(authenticationEntryPoint)
                 )
                 // Accept access tokens for User Info and/or Client Registration
-                .oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt);
+                .oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)
+                .cors(cors->{
+                    cors.configurationSource(new CRCorsConfigurationSource());
+                });
         return http.build();
     }
 

@@ -34,14 +34,13 @@ public class TokenFilter extends OncePerRequestFilter {
         response.setCharacterEncoding("utf-8");
         Enumeration<String> aa = request.getHeaderNames();
         //
-        String token = request.getHeader("authorization");
+        String token = request.getHeader("u-token");
 
         //如果没有继续走下面的过滤器
-        if(!StringUtils.hasText(token) || !token.startsWith("Bearer")){
+        if(!StringUtils.hasText(token)){
             filterChain.doFilter(request,response);
             return;
         }
-        token = token.replaceFirst("Bearer ","");
         Jwt to;
         try{
             to = decoder.decode(token);

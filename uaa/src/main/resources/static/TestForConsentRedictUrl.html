@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Hello World</title>
+<!--    这个文件用来测试  重定向到/oauth2/consent 接口，后前端页面是否可以正常拿到返回值-->
+</head>
+<body>
+<h1>Hello World</h1>
+<input type="text" id="myInput" placeholder="输入点什么">
+<button onclick="doAjax()">发送请求</button>
+<pre id="result"></pre>
+
+<script>
+    async function doAjax() {
+        document.getElementById('result').textContent = '请求中...';
+        var token = document.getElementById("myInput").value;
+        alert(token)
+        try {
+            const response = await fetch('http://localhost:8090/oauth2/authorize?client_id=messaging-client&response_type=code&redirect_uri=http://localhost:8081/callback&scope=user:read&state=xyz12343', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'u-token': token
+                }
+            });
+
+            const data = await response.json();
+            console.log(data)
+            document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+        } catch (err) {
+            document.getElementById('result').textContent = '错误: ' + err.message;
+        }
+    }
+</script>
+</body>
+</html>
