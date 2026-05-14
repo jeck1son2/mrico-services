@@ -3,6 +3,7 @@ package com.demo.uaa.config.security;
 import cn.hutool.json.JSONUtil;
 import com.demo.uaa.config.security.filters.TokenFilter;
 import com.demo.uaa.web.result.Res;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -16,6 +17,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
@@ -29,13 +31,15 @@ import java.util.Set;
 @Configuration
 public class SecurityConfig {
 
-    private final TokenFilter tokenFilter;
-
     private final AuthenticationSuccessHandler authenticationSuccessHandler;
 
     private final AccessDeniedHandler accessDeniedHandler;
 
     private final AuthenticationEntryPoint authenticationEntryPoint;
+
+    private final JwtDecoder decoder;
+
+    private final ObjectMapper objectMapper;
 
     @Bean
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
@@ -46,12 +50,13 @@ public class SecurityConfig {
                 .authorizeRequests()
                 .antMatchers(HttpMethod.OPTIONS).permitAll()
                 .antMatchers("/api/v1/login").permitAll()
+                .antMatchers("/**").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
-                .addFilterBefore(tokenFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new TokenFilter(decoder,objectMapper), UsernamePasswordAuthenticationFilter.class)
                 .formLogin()
                 .loginProcessingUrl("/api/v1/login")
                 .successHandler(authenticationSuccessHandler)
@@ -76,11 +81,13 @@ public class SecurityConfig {
         return PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
 
-    public SecurityConfig(TokenFilter tokenFilter,AuthenticationSuccessHandler authenticationSuccessHandler,
-                          AccessDeniedHandler accessDeniedHandler,AuthenticationEntryPoint authenticationEntryPoint){
-        this.tokenFilter = tokenFilter;
+    public SecurityConfig(AuthenticationSuccessHandler authenticationSuccessHandler,
+                          AccessDeniedHandler accessDeniedHandler, AuthenticationEntryPoint authenticationEntryPoint,
+                          JwtDecoder decoder, ObjectMapper objectMapper){
         this.authenticationSuccessHandler = authenticationSuccessHandler;
         this.accessDeniedHandler = accessDeniedHandler;
         this.authenticationEntryPoint = authenticationEntryPoint;
+        this.decoder = decoder;
+        this.objectMapper = objectMapper;
     }
 }

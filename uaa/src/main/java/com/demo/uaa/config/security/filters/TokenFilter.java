@@ -1,13 +1,15 @@
 package com.demo.uaa.config.security.filters;
 
+import cn.hutool.json.JSONUtil;
 import com.demo.uaa.entity.User;
+import com.demo.uaa.web.result.Res;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.stereotype.Component;
+import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -20,7 +22,6 @@ import java.util.Enumeration;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Component
 public class TokenFilter extends OncePerRequestFilter {
 
     private final JwtDecoder decoder;
@@ -34,13 +35,22 @@ public class TokenFilter extends OncePerRequestFilter {
         Enumeration<String> aa = request.getHeaderNames();
         //
         String token = request.getHeader("authorization");
-        token = token == null ? null : token.replaceFirst("Bearer ","");
+
         //如果没有继续走下面的过滤器
-        if(!StringUtils.hasText(token)){
+        if(!StringUtils.hasText(token) || !token.startsWith("Bearer")){
             filterChain.doFilter(request,response);
             return;
         }
-        Jwt to = decoder.decode(token);
+        token = token.replaceFirst("Bearer ","");
+        Jwt to;
+        try{
+            to = decoder.decode(token);
+        }catch(JwtException e){
+            logger.error(e);
+            response.getWriter().write(JSONUtil.toJsonStr(Res.builder().code(401).message("").info(e.getMessage()).build()));
+            return;
+        }
+
         String uJson = (String) to.getClaims().get("user");
         String auJson = (String) to.getClaims().get("authorities");
         User user = objectMapper.readValue(uJson,User.class);

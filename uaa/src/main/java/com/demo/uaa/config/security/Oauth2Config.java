@@ -1,18 +1,19 @@
 package com.demo.uaa.config.security;
 
 import cn.hutool.json.JSONUtil;
+import com.demo.uaa.config.security.filters.TokenFilter;
 import com.demo.uaa.web.result.Res;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
-import org.springframework.security.oauth2.core.oidc.OidcScopes;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
@@ -20,9 +21,12 @@ import org.springframework.security.oauth2.server.authorization.config.annotatio
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
+import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationServerMetadataEndpointFilter;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.security.web.authentication.logout.LogoutFilter;
 
 import java.util.UUID;
 
@@ -33,11 +37,17 @@ public class Oauth2Config {
     private final AccessDeniedHandler accessDeniedHandler;
     private final AuthenticationEntryPoint authenticationEntryPoint;
 
+    private final JwtDecoder decoder;
+    private final ObjectMapper objectMapper;
+
+
     @Bean
     @Order(Ordered.HIGHEST_PRECEDENCE)
     public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http)
             throws Exception {
         OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
+
+
         OAuth2AuthorizationServerConfigurer config = http.getConfigurer(OAuth2AuthorizationServerConfigurer.class);
 //                .oidc(Customizer.withDefaults());	// Enable OpenID Connect 1.0
         //禁止oauth2 失败自动跳转/error
@@ -52,10 +62,11 @@ public class Oauth2Config {
 
 
         http
+                .addFilterAfter(new TokenFilter(decoder,objectMapper), LogoutFilter.class)
                 // Redirect to the login page when not authenticated from the
                 // authorization endpoint
                 .exceptionHandling((exceptions) -> exceptions
-                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login"))
                         .accessDeniedHandler(accessDeniedHandler)
                 )
                 // Accept access tokens for User Info and/or Client Registration
@@ -91,8 +102,11 @@ public class Oauth2Config {
         return AuthorizationServerSettings.builder().build();
     }
 
-    public Oauth2Config(AccessDeniedHandler accessDeniedHandler,AuthenticationEntryPoint authenticationEntryPoint){
+    public Oauth2Config(AccessDeniedHandler accessDeniedHandler,AuthenticationEntryPoint authenticationEntryPoint,
+                        JwtDecoder decoder, ObjectMapper objectMapper){
         this.accessDeniedHandler = accessDeniedHandler;
         this.authenticationEntryPoint = authenticationEntryPoint;
+        this.decoder = decoder;
+        this.objectMapper = objectMapper;
     }
 }
