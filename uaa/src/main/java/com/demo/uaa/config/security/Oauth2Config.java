@@ -21,7 +21,6 @@ import org.springframework.security.oauth2.server.authorization.config.annotatio
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
-import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationServerMetadataEndpointFilter;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
@@ -47,27 +46,28 @@ public class Oauth2Config {
             throws Exception {
         OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
 
-
         OAuth2AuthorizationServerConfigurer config = http.getConfigurer(OAuth2AuthorizationServerConfigurer.class);
 //                .oidc(Customizer.withDefaults());	// Enable OpenID Connect 1.0
         //禁止oauth2 失败自动跳转/error
-        config.authorizationEndpoint(authenticationEntryPoint->{
-            authenticationEntryPoint.errorResponseHandler((request,response,authenticationException)->{
+        config.authorizationEndpoint(authenticationEntryPoint -> {
+            authenticationEntryPoint.errorResponseHandler((request, response, authenticationException) -> {
                 response.setContentType("application/json");
                 response.setCharacterEncoding("utf-8");
                 Res r = Res.builder().code(401).message("授权失败").info(authenticationException.getMessage()).build();
                 response.getWriter().write(JSONUtil.toJsonStr(r));
             });
+            //必须要有默认的授权页面，禁止不了
+//                    .consentPage("/oauth2/consent");
         });
 
-
         http
-                .addFilterAfter(new TokenFilter(decoder,objectMapper), LogoutFilter.class)
+                .addFilterAfter(new TokenFilter(decoder, objectMapper), LogoutFilter.class)
                 // Redirect to the login page when not authenticated from the
                 // authorization endpoint
                 .exceptionHandling((exceptions) -> exceptions
-                        .authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login"))
-                        .accessDeniedHandler(accessDeniedHandler)
+//                        .authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login"))
+                                .accessDeniedHandler(accessDeniedHandler)
+                                .authenticationEntryPoint(authenticationEntryPoint)
                 )
                 // Accept access tokens for User Info and/or Client Registration
                 .oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt);
@@ -102,8 +102,8 @@ public class Oauth2Config {
         return AuthorizationServerSettings.builder().build();
     }
 
-    public Oauth2Config(AccessDeniedHandler accessDeniedHandler,AuthenticationEntryPoint authenticationEntryPoint,
-                        JwtDecoder decoder, ObjectMapper objectMapper){
+    public Oauth2Config(AccessDeniedHandler accessDeniedHandler, AuthenticationEntryPoint authenticationEntryPoint,
+                        JwtDecoder decoder, ObjectMapper objectMapper) {
         this.accessDeniedHandler = accessDeniedHandler;
         this.authenticationEntryPoint = authenticationEntryPoint;
         this.decoder = decoder;
