@@ -31,3 +31,23 @@ build/
 
 ### VS Code ###
 .vscode/
+/front/.editorconfig
+/front/.gitattributes
+/front/.gitignore
+/front/img/.gitkeep
+/front/js/vendor/.gitkeep
+/front/404.html
+/front/js/app.js
+/front/favicon.ico
+/front/icon.png
+/front/icon.svg
+/front/index.html
+/front/LICENSE.txt
+/front/package.json
+/front/robots.txt
+/front/site.webmanifest
+/front/css/style.css
+/front/test.html
+/front/webpack.common.js
+/front/webpack.config.dev.js
+/front/webpack.config.prod.js
