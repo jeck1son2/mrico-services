@@ -61,5 +61,6 @@
         <module>gateway</module>
         <module>uaa</module>
         <module>usecurity</module>
+        <module>micro-server</module>
     </modules>
 </project>

@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
@@ -24,6 +25,7 @@ import org.springframework.security.oauth2.server.authorization.settings.ClientS
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.authentication.logout.LogoutFilter;
 
 import java.util.UUID;
@@ -45,11 +47,12 @@ public class Oauth2Config {
             throws Exception {
         OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
 
-        OAuth2AuthorizationServerConfigurer config = http.getConfigurer(OAuth2AuthorizationServerConfigurer.class);
-//                .oidc(Customizer.withDefaults());	// Enable OpenID Connect 1.0
+        OAuth2AuthorizationServerConfigurer config = http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
+                .oidc(Customizer.withDefaults());    // Enable OpenID Connect 1.0
         //禁止oauth2 失败自动跳转/error
         config.authorizationEndpoint(authenticationEntryPoint -> {
-            authenticationEntryPoint.errorResponseHandler((request, response, authenticationException) -> {
+            authenticationEntryPoint
+                    .errorResponseHandler((request, response, authenticationException) -> {
                         response.setContentType("application/json");
                         response.setCharacterEncoding("utf-8");
                         Res r = Res.builder().code(401).message("授权失败").info(authenticationException.getMessage()).build();
@@ -70,35 +73,35 @@ public class Oauth2Config {
                 )
                 // Accept access tokens for User Info and/or Client Registration
                 .oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)
-                .cors(cors->{
+                .cors(cors -> {
                     cors.configurationSource(new CRCorsConfigurationSource());
                 });
         return http.build();
     }
 
-    @Bean
-    public RegisteredClientRepository registeredClientRepository() {
-        RegisteredClient registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
-                .clientId("messaging-client")
-                .clientSecret("{noop}secret")
-                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-                .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-                .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-                .redirectUri("http://127.0.0.1:8080/login/oauth2/code/messaging-client-oidc")
-                .redirectUri("http://127.0.0.1:8080/authorized")
-                .redirectUri("http://localhost:8081/callback")
-//                .scope(OidcScopes.OPENID)
-//                .scope(OidcScopes.PROFILE)
-                .scope("user:read")
-                .scope("message.read")
-                .scope("message.write")
-                .clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
-                .build();
+//    @Bean
+//    public RegisteredClientRepository registeredClientRepository() {
+//        RegisteredClient registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
+//                .clientId("messaging-client")
+//                .clientSecret("{noop}secret")
+//                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+//                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+//                .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+//                .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+//                .redirectUri("http://127.0.0.1:8080/login/oauth2/code/messaging-client-oidc")
+//                .redirectUri("http://127.0.0.1:8080/authorized")
+//                .redirectUri("http://localhost:8081/callback")
 
-        return new InMemoryRegisteredClientRepository(registeredClient);
-    }
-
+    /// /                .scope(OidcScopes.OPENID)
+    /// /                .scope(OidcScopes.PROFILE)
+//                .scope("user:read")
+//                .scope("message.read")
+//                .scope("message.write")
+//                .clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
+//                .build();
+//
+//        return new InMemoryRegisteredClientRepository(registeredClient);
+//    }
     @Bean
     public AuthorizationServerSettings authorizationServerSettings() {
         return AuthorizationServerSettings.builder().build();

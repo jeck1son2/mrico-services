@@ -28,6 +28,8 @@ import org.springframework.util.StringUtils;
 
 import java.util.Set;
 
+import static org.springframework.security.config.Customizer.withDefaults;
+
 @Configuration
 public class SecurityConfig {
 
